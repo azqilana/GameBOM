@@ -11,6 +11,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvScore: TextView
     private var score = 0
     private var bombIndex = 0
+    private var revealedSafeCount = 0
+    private val openedBoxes = mutableSetOf<Int>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,19 +37,41 @@ class MainActivity : AppCompatActivity() {
 
     private fun startNewRound() {
         bombIndex = (0 until 9).random()
-        boxes.forEach { it.text = "" }
+        revealedSafeCount = 0
+        openedBoxes.clear()
+        boxes.forEach {
+            it.text = ""
+            it.isEnabled = true
+        }
     }
 
     private fun onBoxClicked(index: Int) {
+        if (openedBoxes.contains(index)) return
+
         if (index == bombIndex) {
             boxes[index].text = "\uD83D\uDCA3"
+            boxes[index].isEnabled = false
             score = 0
             tvScore.text = "Skor: $score (Kalah! Reset)"
+            disableAllBoxes()
+            boxes[0].postDelayed({ startNewRound() }, 800)
         } else {
             boxes[index].text = "\u2705"
+            boxes[index].isEnabled = false
+            openedBoxes.add(index)
+            revealedSafeCount += 1
             score += 1
             tvScore.text = "Skor: $score"
+
+            if (revealedSafeCount == 8) {
+                tvScore.text = "Skor: $score (Menang ronde! Reset)"
+                disableAllBoxes()
+                boxes[0].postDelayed({ startNewRound() }, 800)
+            }
         }
-        startNewRound()
+    }
+
+    private fun disableAllBoxes() {
+        boxes.forEach { it.isEnabled = false }
     }
 }
